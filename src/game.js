@@ -492,6 +492,7 @@ var keys = {};
 // ---- virtual touch input (iPad / tablet) ----
 var touchStick = { f: 0, r: 0, up: 0 };
 var touchJumpHeld = false;
+var touchEnabled = false;
 var GRAVITY = 26, JUMP_V = 8.6, WALK = 5.4, FLY_V = 11;
 
 function spawnPlayer() {
@@ -1059,7 +1060,7 @@ function setState(s) {
     document.exitPointerLock && document.exitPointerLock();
     document.getElementById('btn-continue').style.display = hasSave() ? 'block' : 'none';
   }
-  if (s === 'playing') {
+  if (s === 'playing' && !touchEnabled) {
     try { canvas.requestPointerLock(); } catch (e) {}
   }
   sfxClick();
@@ -1203,11 +1204,12 @@ function bindInput() {
   document.addEventListener('keyup', function (e) { keys[e.code] = false; });
 
   canvas.addEventListener('click', function () {
-    if (state === 'playing' && document.pointerLockElement !== canvas) {
+    if (!touchEnabled && state === 'playing' && document.pointerLockElement !== canvas) {
       try { canvas.requestPointerLock(); } catch (e) {}
     }
   });
   document.addEventListener('pointerlockchange', function () {
+    if (touchEnabled) return;
     if (state === 'playing' && document.pointerLockElement !== canvas) setState('pause');
     if (document.pointerLockElement === canvas && state === 'pause') setState('playing');
   });
@@ -1325,6 +1327,8 @@ function setupTouch() {
   }
 
   document.body.classList.add('touch-mode');
+  touchEnabled = true;
+  showToast('📱 触屏模式 Touch controls ON：左摇杆移动 · 拖动看四周');
 }
 
 function bindButtons() {
@@ -1336,7 +1340,7 @@ function bindButtons() {
     if (state === 'playing') document.exitPointerLock();
     helpEl.classList.remove('hidden');
   };
-  document.getElementById('btn-help-close').onclick = function () { helpEl.classList.add('hidden'); if (state === 'playing') try { canvas.requestPointerLock(); } catch (e) {} };
+  document.getElementById('btn-help-close').onclick = function () { helpEl.classList.add('hidden'); if (state === 'playing' && !touchEnabled) try { canvas.requestPointerLock(); } catch (e) {} };
   document.getElementById('btn-save').onclick = function () { save(); showToast('💾 已保存 Saved!'); sfxStar(); };
   var newArm = 0;
   document.getElementById('btn-newmap').onclick = function () {
