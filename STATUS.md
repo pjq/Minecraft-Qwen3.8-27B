@@ -80,3 +80,8 @@ Or on the Mac: `open index.html`
 
 ---
 *Built 2026-08-16 overnight. Enjoy, son. 🎮*
+
+## 2026-08-16 updates
+- **iPad/tablet touch controls**: virtual joystick (left), full-screen drag look, jump/fly/break/place buttons, hotbar ◀▶ nav, auto-detect (hidden on desktop), responsive layout.
+- **Solid blocks fix**: top/bottom face winding was reversed (three.js culled the open top, blocks looked hollow) + shared-vertex normals averaged diagonally. Rewrote `makeBlockGeometry()` with 24 non-shared CCW vertices + explicit flat face normals; blocks are now solid with correct lighting.
+- Deployed to VPS: https://chitchat.pjq.me/download/Minecraft/

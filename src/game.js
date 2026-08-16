@@ -167,37 +167,37 @@ function tileUV(tile) {
 // every face is wound counter-clockwise seen from outside; side faces ordered bottomA,bottomB,topB,topA
 function makeBlockGeometry(tiles) {
   var uv = tiles.map(tileUV);
-  var P = [
-    // top (+y)
-    0,1,0,  1,1,0,  1,1,1,  0,1,1,
-    // bottom (-y)
-    0,0,1,  1,0,1,  1,0,0,  0,0,0,
-    // +x
-    1,0,1,  1,0,0,  1,1,0,  1,1,1,
-    // -x
-    0,0,0,  0,0,1,  0,1,1,  0,1,0,
-    // +z
-    0,0,1,  1,0,1,  1,1,1,  0,1,1,
-    // -z
-    1,0,0,  0,0,0,  0,1,0,  1,1,0
+  // 6 faces, each 4 vertices wound COUNTER-CLOCKWISE when viewed from outside
+  // (three.js front face = CCW). Order: top, bottom, +x, -x, +z, -z.
+  var POS = [
+    [0,1,0,  0,1,1,  1,1,1,  1,1,0],  // +y top  -> normal +y
+    [0,0,0,  1,0,0,  1,0,1,  0,0,1],  // -y bottom -> normal -y
+    [1,0,1,  1,0,0,  1,1,0,  1,1,1],  // +x
+    [0,0,0,  0,0,1,  0,1,1,  0,1,0],  // -x
+    [0,0,1,  1,0,1,  1,1,1,  0,1,1],  // +z
+    [1,0,0,  0,0,0,  0,1,0,  1,1,0]   // -z
   ];
-  var idx = [];
-  var uvs = [];
+  var NORM = [[0,1,0],[0,-1,0],[1,0,0],[-1,0,0],[0,0,1],[0,0,-1]];
+  var P = [], U = [], N = [], idx = [];
   for (var f = 0; f < 6; f++) {
-    var o = f * 4;
+    var o = f * 4, t = uv[f];
+    // UV corners matched to the 4 positions above. Top uses a top-down v layout;
+    // all other faces use bottom-edge-first. Solid, non-flipped faces.
+    var uvc = (f === 0)
+      ? [[t.u0,t.v0],[t.u0,t.v1],[t.u1,t.v1],[t.u1,t.v0]]
+      : [[t.u0,t.v0],[t.u1,t.v0],[t.u1,t.v1],[t.u0,t.v1]];
     idx.push(o, o+1, o+2, o, o+2, o+3);
-    var t = uv[f];
-    var m;
-    if (f === 0) m = [[t.u0,t.v1],[t.u1,t.v1],[t.u1,t.v0],[t.u0,t.v0]]; // top: v grows with +z
-    else if (f === 1) m = [[t.u0,t.v0],[t.u1,t.v0],[t.u1,t.v1],[t.u0,t.v1]];
-    else m = [[t.u0,t.v0],[t.u1,t.v0],[t.u1,t.v1],[t.u0,t.v1]]; // sides: bottom edge first
-    for (var k = 0; k < 4; k++) uvs.push(m[k][0], m[k][1]);
+    for (var k = 0; k < 4; k++) {
+      P.push(POS[f][k*3], POS[f][k*3+1], POS[f][k*3+2]);
+      U.push(uvc[k][0], uvc[k][1]);
+      N.push(NORM[f][0], NORM[f][1], NORM[f][2]);
+    }
   }
   var g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
   g.setIndex(idx);
-  g.computeVertexNormals();
   return g;
 }
 
